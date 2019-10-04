@@ -1,0 +1,200 @@
+﻿<#@ template language="C#"#>
+<#@ assembly name="System" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data" #>
+<#@ assembly name="System.Data.Common" #>
+<#@ assembly name="System.Collections" #> 
+<#@ assembly name="Oracle.ManagedDataAccess" #>
+<#@ assembly name="System.Runtime" #>
+<#@ assembly name="System.ComponentModel.Primitives" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Data" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Data.Common" #>
+<#@ import namespace="System.Runtime" #>
+<#@ import namespace="Oracle.ManagedDataAccess.Client" #>
+<#@ parameter name="tableName" type="System.string" #>
+<#@ parameter name="columnNameList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="columnTypeList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="nullableList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="dataPrecision" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="dataScale" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="ClassName" type="System.string" #>
+<#@ parameter name="ObjectName" type="System.string" #>
+<#@ parameter name="AngularFileName" type="System.string" #>
+ create or replace PACKAGE BODY <#=tableName#>_PKG AS
+
+PROCEDURE GET_<#=tableName#>_PRC(P_ID NUMBER ,P_REFCURSOR_OUT  OUT SYS_REFCURSOR ) 
+IS BEGIN
+OPEN P_REFCURSOR_OUT FOR  SELECT * FROM <#=tableName#> WHERE ID = P_ID  ;
+END GET_<#=tableName#>_PRC;
+
+PROCEDURE ADD_<#=tableName#>_PRC(
+<#for(int i=0;i<columnTypeList.Count;i++){ 
+		if(columnNameList[i]!="DELETED_BY" 
+		&& columnNameList[i]!="DELETION_DATE"
+		&& columnNameList[i]!="MODIFIED_BY"
+		&& columnNameList[i]!="MODIFICATION_DATE" 
+		&& columnNameList[i]!="CREATION_DATE"
+		&& columnNameList[i]!="ID"){#>
+P_<#=columnNameList[i]#> <#=tableName#>.<#=columnNameList[i]#>%TYPE,
+<#}}#>P_ID_OUT OUT NUMBER)
+IS
+BEGIN
+INSERT INTO  <#=tableName#> (
+<#for(int i=0;i<columnTypeList.Count;i++){ 
+		if(columnNameList[i]!="DELETED_BY" 
+		&& columnNameList[i]!="DELETION_DATE"
+		&& columnNameList[i]!="MODIFIED_BY"
+		&& columnNameList[i]!="MODIFICATION_DATE" 
+		&& columnNameList[i]!="CREATION_DATE"
+		&& columnNameList[i]!="CREATED_BY"
+		&& columnNameList[i]!="ID"){#>
+		<#=columnNameList[i]#>,
+		<#}}#>
+		CREATION_DATE,CREATED_BY) VALUES(
+		<#for(int i=0;i<columnTypeList.Count;i++){ 
+		if(columnNameList[i]!="DELETED_BY" 
+		&& columnNameList[i]!="DELETION_DATE"
+		&& columnNameList[i]!="MODIFIED_BY"
+		&& columnNameList[i]!="MODIFICATION_DATE" 
+		&& columnNameList[i]!="CREATION_DATE"
+		&& columnNameList[i]!="CREATED_BY"
+		&& columnNameList[i]!="ID"){#>
+		P_<#=columnNameList[i]#>,
+		<#}}#>
+		SYSDATE,P_CREATED_BY) RETURNING ID INTO P_ID_OUT;
+END  ADD_<#=tableName#>_PRC;
+
+PROCEDURE DEL_<#=tableName#>_prc(P_ID NUMBER ,P_DELETED_BY <#=tableName#>.DELETED_BY%TYPE ) 
+IS BEGIN
+UPDATE <#=tableName#> SET DELETED_BY=P_DELETED_BY ,DELETION_DATE=SYSDATE  WHERE ID=P_ID;
+END DEL_<#=tableName#>_prc;
+
+PROCEDURE UPD_<#=tableName#>_PRC(
+<#for(int i=0;i<columnTypeList.Count;i++){ 
+		if(columnNameList[i]!="DELETED_BY" 
+		&& columnNameList[i]!="DELETION_DATE" 
+		&& columnNameList[i]!="MODIFICATION_DATE"
+		&& columnNameList[i]!="CREATED_BY"
+		&& columnNameList[i]!="CREATION_DATE"){
+		if(i<columnTypeList.Count-6){#>
+P_<#=columnNameList[i]#> <#=tableName#>.<#=columnNameList[i]#>%TYPE,
+<#}else{#>
+P_<#=columnNameList[i]#> <#=tableName#>.<#=columnNameList[i]#>%TYPE
+<#}}}#>)
+IS
+BEGIN
+UPDATE  <#=tableName#> SET 
+<#for(int i=0;i<columnTypeList.Count;i++){ 
+		if(columnNameList[i]!="ID"
+		&& columnNameList[i]!="DELETED_BY" 
+		&& columnNameList[i]!="DELETION_DATE" 
+		&& columnNameList[i]!="MODIFIED_BY"
+		&& columnNameList[i]!="MODIFICATION_DATE"
+		&& columnNameList[i]!="CREATED_BY"
+		&& columnNameList[i]!="CREATION_DATE"){#>
+		<#=columnNameList[i]#>=P_<#=columnNameList[i]#>,
+		<#}}#>
+		MODIFICATION_DATE=SYSDATE,MODIFIED_BY=P_MODIFIED_BY WHERE ID = P_ID ;
+END  UPD_<#=tableName#>_PRC;
+
+PROCEDURE  SEARCH_<#=tableName#>_PRC (
+
+   P_CURRENT_PAGE    IN     INTEGER,
+
+   P_PAGE_SIZE       IN     INTEGER,
+
+   P_TOTAL_RECORDS      OUT INTEGER,
+
+   P_REFCURSOR_OUT      OUT SYS_REFCURSOR)
+
+IS
+
+   VV_FIRST_REC   NUMBER;
+
+   VV_LAST_REC    NUMBER;
+
+BEGIN
+
+   VV_FIRST_REC := ((P_CURRENT_PAGE - 1) * P_PAGE_SIZE)+1; VV_LAST_REC := (P_CURRENT_PAGE * P_PAGE_SIZE);
+
+   SELECT COUNT (*) INTO P_TOTAL_RECORDS FROM <#=tableName#> WHERE DELETED_BY IS NULL; OPEN P_REFCURSOR_OUT FOR
+
+      SELECT *
+
+        FROM (  SELECT <#=tableName#>.*, row_number() over (order by <#=tableName#>.ID desc)   IN_ROWNUM FROM <#=tableName#> WHERE DELETED_BY IS NULL)
+
+       WHERE IN_ROWNUM BETWEEN VV_FIRST_REC AND VV_LAST_REC;
+
+END SEARCH_<#=tableName#>_PRC;
+
+
+END <#=tableName#>_PKG;
+<#+
+public string GetTypeScriptType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "number";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="CHAR"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "Date";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)==1){
+        return "boolean";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "number";
+    }else{
+    return dbType;
+    }
+}
+public string GetType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "int";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="CHAR"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "DateTime";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)==1){
+        return "bool";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "double";
+    }else{
+    return dbType;
+    }
+}
+public string GetNullableType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "int?";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="CHAR"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "DateTime?";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && dataPrecision=="1"){
+        return "bool?";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "double?";
+    }else{
+    return dbType;
+    }
+}
+
+#>

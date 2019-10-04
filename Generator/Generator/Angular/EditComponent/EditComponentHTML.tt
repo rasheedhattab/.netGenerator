@@ -1,0 +1,198 @@
+﻿<#@ template language="C#"#>
+<#@ assembly name="System" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data" #>
+<#@ assembly name="System.Data.Common" #>
+<#@ assembly name="System.Collections" #> 
+<#@ assembly name="Oracle.ManagedDataAccess" #>
+<#@ assembly name="System.Runtime" #>
+<#@ assembly name="System.ComponentModel.Primitives" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Data" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Data.Common" #>
+<#@ import namespace="System.Runtime" #>
+<#@ import namespace="Oracle.ManagedDataAccess.Client" #>
+<#@ parameter name="tableName" type="System.string" #>
+<#@ parameter name="columnNameList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="columnTypeList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="nullableList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="dataPrecision" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="dataScale" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="ClassName" type="System.string" #>
+<#@ parameter name="ObjectName" type="System.string" #>
+<#@ parameter name="AngularFileName" type="System.string" #>
+<div class="animated fadeInRightBig container">
+  <div class="contentHeader">
+    <h1 l10nTranslate>
+      edit<#=ClassName#>
+    </h1>
+  </div>
+  <div class="wrapper">
+    <div class="box-shadow white-bg p-4 ">
+        <form #form="ngForm">
+          
+			<#for(int i=0;i<columnTypeList.Count;i++){
+		if(columnNameList[i]!="ACCOUNT_ID"
+		&& columnNameList[i]!="DELETED_BY" 
+		&& columnNameList[i]!="DELETION_DATE"
+		&& columnNameList[i]!="MODIFIED_BY"
+		&& columnNameList[i]!="MODIFICATION_DATE"
+		&& columnNameList[i]!="CREATED_BY"
+		&& columnNameList[i]!="CREATION_DATE"
+		&& columnNameList[i]!="ID"){
+		if(GetTypeScriptType(columnTypeList[i],dataPrecision[i],dataScale[i]) == "Date"){#>
+		 <div class="row">
+			 <div class="form-group col-md-6">
+				<label for="txt<#=GetClassName(columnNameList[i])#>" l10nTranslate><#=GetClassName(columnNameList[i])#></label>
+				<p-calendar [(ngModel)]="<#=ObjectName#>.<#=GetObjectName(columnNameList[i])#>" name="txt<#=GetClassName(columnNameList[i])#>" showTime="true" dateFormat="dd/mm/yy" class="form-control" hourFormat="24"></p-calendar>
+				<#if(nullableList[i]=="N"){#>
+				<validator controlName="txt<#=GetClassName(columnNameList[i])#>" [forms]="form"></validator>
+				<#}#>
+			 </div>
+         </div>
+		<#}else if(GetTypeScriptType(columnTypeList[i],dataPrecision[i],dataScale[i]) == "boolean"){#>
+		<div class="row">
+			<div class="form-group col-md-6">
+				<label for="chbx<#=GetClassName(columnNameList[i])#>" l10nTranslate><#=GetObjectName(columnNameList[i])#></label>
+				<input type="checkbox" [(ngModel)]="<#=ObjectName#>.<#=GetObjectName(columnNameList[i])#>" id="chk<#=GetClassName(columnNameList[i])#>" name="chbx<#=GetClassName(columnNameList[i])#>">
+			</div>
+        </div>
+		<#}else if(GetTypeScriptType(columnTypeList[i],dataPrecision[i],dataScale[i]) == "number"){#>
+		<div class="row">
+			<div class="form-group col-md-6">
+				<label for="txt<#=GetClassName(columnNameList[i])#>" l10nTranslate><#=GetObjectName(columnNameList[i])#></label>
+				<input type="text" [(ngModel)]="<#=ObjectName#>.<#=GetObjectName(columnNameList[i])#>" id="txt<#=GetClassName(columnNameList[i])#>" <#=isRequired(nullableList[i])#> name="txt<#=GetClassName(columnNameList[i])#>" class="form-control">
+				<#if(nullableList[i]=="N"){#>
+				<validator controlName="txt<#=GetClassName(columnNameList[i])#>" [forms]="form"></validator>
+				<#}#>
+			</div>
+        </div>
+		<#}else if(GetTypeScriptType(columnTypeList[i],dataPrecision[i],dataScale[i]) == "string"){#>
+		<div class="row">
+			<div class="form-group col-md-6">
+				<label for="txt<#=GetClassName(columnNameList[i])#>" l10nTranslate><#=GetObjectName(columnNameList[i])#></label>
+				<input type="text" [(ngModel)]="<#=ObjectName#>.<#=GetObjectName(columnNameList[i])#>" id="txt<#=GetClassName(columnNameList[i])#>" <#=isRequired(nullableList[i])#> name="txt<#=GetClassName(columnNameList[i])#>" class="form-control">
+				<#if(nullableList[i]=="N"){#>
+				<validator controlName="txt<#=GetClassName(columnNameList[i])#>" [forms]="form"></validator>
+				<#}#>
+			</div>
+        </div>
+		<#}
+		}
+		}#> 
+        <div class="clearfix"></div>
+        </form>
+      <hr />
+        <div class="formActions form-group">
+          <button value="Back" (click)="backToList()" class="btn btn-default pull-left" l10nTranslate><i class="fa fa-arrow-left"></i>cancel</button>
+          <button type="submit" (click)="edit<#=ClassName#>()" [disabled]="!form.valid" class="btn btn-primary pull-left" l10nTranslate><i class="fa fa-save"></i> update</button>
+          <div class="clearfix"></div>
+        </div>
+      </div>
+    </div>
+</div>
+<#+
+public string GetTypeScriptType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "number";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="CHAR"){
+        return "string";
+    }else if(dbType=="BLOB"){
+        return "string";
+    }else if(dbType=="CLOB"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "Date";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)==1){
+        return "boolean";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "number";
+    }else{
+    return dbType;
+    }
+}
+public string GetType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "int";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="CHAR"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "DateTime";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)==1){
+        return "bool";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "double";
+    }else{
+    return dbType;
+    }
+}
+public string GetNullableType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "int?";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="CHAR"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "DateTime?";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && dataPrecision=="1"){
+        return "bool?";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "double?";
+    }else{
+    return dbType;
+    }
+} 
+public string isRequired(string nullable){
+	if(nullable=="N"){
+	return "required";
+	}
+	return "";
+}
+
+
+public static string GetClassName(string text)
+{
+    text = ToPascalCase(text);
+    if(text.IndexOf('s')==text.Length-1){
+        string result = text.Remove(text.LastIndexOf('s'));
+        return result;
+    }
+    return text;
+}
+
+public static string ToPascalCase(string text)
+{
+    string result = text.Split('_').Select(s => char.ToUpperInvariant(s[0]) + s.Substring(1, s.Length - 1).ToLower()).Aggregate(string.Empty, (s1, s2) => s1 + s2); ;
+    return result;
+}
+
+public static string GetObjectName(string text)
+{
+    text = ToPascalCase(text);
+    text = Char.ToLower(text[0]) + text.Substring(1, text.Length - 1);
+    if (text.LastIndexOf('s') == text.Length - 1)
+    {
+        text = text.Remove(text.LastIndexOf('s'));
+    }
+    return text;
+}
+#>

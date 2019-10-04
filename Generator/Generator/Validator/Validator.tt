@@ -1,0 +1,173 @@
+﻿<#@ template language="C#"#>
+<#@ assembly name="System" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data" #>
+<#@ assembly name="System.Data.Common" #>
+<#@ assembly name="System.Collections" #>
+<#@ assembly name="Oracle.ManagedDataAccess" #>
+<#@ assembly name="System.Runtime" #>
+<#@ assembly name="System.ComponentModel.Primitives" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Data" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Data.Common" #>
+<#@ import namespace="System.Runtime" #>
+<#@ import namespace="Oracle.ManagedDataAccess.Client" #>
+<#@ parameter name="tableName" type="System.string" #>
+<#@ parameter name="columnNameList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="columnTypeList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="nullableList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="dataPrecision" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="dataScale" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="columnLengthList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="ClassName" type="System.string" #>
+<#@ parameter name="ObjectName" type="System.string" #>
+<#@ parameter name="AngularFileName" type="System.string" #>
+using System;
+using FluentValidation;
+using FluentValidation.Results;
+using Entity;
+using Services.Resource;
+
+namespace Services.Validators
+{
+    public class <#=ClassName#>Validator: AbstractValidator<<#=ClassName#>>
+    {
+<#
+int errorSequance=1;
+for(int i=0;i<nullableList.Count;i++){
+if(nullableList[i]=="N" && columnNameList[i]!="id"){
+#> 
+        //<#=columnNameList[i]#> Required
+        public const string <#=GetClassName(tableName).ToUpper()#>_E00<#=(errorSequance).ToString() #> = "<#=GetClassName(tableName).ToUpper()#>_E00<#=(errorSequance).ToString() #>";
+<#errorSequance++;#>
+<#if(GetType(columnTypeList[i],dataPrecision[i],dataScale[i])=="string"){#>
+        //<#=columnNameList[i]#> length between 1 to <#=columnLengthList[i]#>
+        public const string <#=GetClassName(tableName).ToUpper()#>_E00<#=(errorSequance).ToString() #> = "<#=GetClassName(tableName).ToUpper()#>_E00<#=(errorSequance).ToString() #>";
+<#errorSequance++;#>
+<#}#>
+
+<#}else if(columnNameList[i]!="id"){
+#>
+<#if(GetType(columnTypeList[i],dataPrecision[i],dataScale[i])=="string"){#>
+        //<#=columnNameList[i]#> max length is <#=columnLengthList[i]#>
+        public const string <#=GetClassName(tableName).ToUpper()#>_E00<#=(errorSequance).ToString() #> = "<#=GetClassName(tableName).ToUpper()#>_E00<#=(errorSequance).ToString() #>";
+<#errorSequance++;#>
+<#}#>
+<#
+}
+}
+#>
+
+        public <#=ClassName#>Validator()
+        {
+<#
+errorSequance=1;
+for(int i=0;i<nullableList.Count;i++){
+if(nullableList[i]=="N" && columnNameList[i]!="id"){
+#> 
+<#if(GetType(columnTypeList[i],dataPrecision[i],dataScale[i])=="string"){#>
+            //<#=columnNameList[i]#> Required
+            RuleFor(<#=ObjectName#> => <#=ObjectName#>.<#=ToPascalCase(columnNameList[i])#>).NotEmpty().NotNull().WithErrorCode(<#=GetClassName(tableName).ToUpper()#>_E00<#=(errorSequance).ToString()#>).WithMessage(ErrorCodeManager.ErrorMessage(<#=GetClassName(tableName).ToUpper()#>_E00<#=(errorSequance).ToString() #>));
+<#errorSequance++;#>
+            //<#=columnNameList[i]#> length between 1 to <#=columnLengthList[i]#>
+            RuleFor(<#=ObjectName#> => <#=ObjectName#>.<#=ToPascalCase(columnNameList[i])#>).Length(1, <#=columnLengthList[i].ToString()#>).WithErrorCode(<#=GetClassName(tableName).ToUpper()#>_E00<#=(errorSequance).ToString()#>).WithMessage(ErrorCodeManager.ErrorMessage(<#=GetClassName(tableName).ToUpper()#>_E00<#=(errorSequance).ToString()#>));
+<#errorSequance++;#>
+<#}else{#>
+            //<#=columnNameList[i]#> Required
+            RuleFor(<#=ObjectName#> => <#=ObjectName#>.<#=ToPascalCase(columnNameList[i])#>).NotNull().WithErrorCode(<#=GetClassName(tableName).ToUpper()#>_E00<#=(errorSequance).ToString()#>).WithMessage(ErrorCodeManager.ErrorMessage(<#=GetClassName(tableName).ToUpper()#>_E00<#=(errorSequance).ToString() #>));
+<#errorSequance++;#>
+<#}#>
+<#}else if(columnNameList[i]!="id"){
+#>
+<#if(GetType(columnTypeList[i],dataPrecision[i],dataScale[i])=="string"){#>
+            //<#=columnNameList[i]#> max length is <#=columnLengthList[i]#>
+            RuleFor(<#=ObjectName#> => <#=ObjectName#>.<#=ToPascalCase(columnNameList[i])#>).MaximumLength(<#=columnLengthList[i].ToString()#>).WithErrorCode(<#=GetClassName(tableName).ToUpper()#>_E00<#=(errorSequance).ToString()#>).WithMessage(ErrorCodeManager.ErrorMessage(<#=GetClassName(tableName).ToUpper()#>_E00<#=(errorSequance).ToString()#>));
+<#errorSequance++;#>
+<#}#>
+<#
+}
+}
+#>
+        }
+    }
+}<#+
+ public string GetType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "int";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="CHAR"){
+        return "string";
+    }else if(dbType=="BLOB"){
+        return "string";
+    }else if(dbType=="CLOB"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "DateTime";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)==1){
+        return "bool";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "double";
+    }else{
+    return dbType;
+    }
+}
+public string GetNullableType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "int?";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="CHAR"){
+        return "string";
+    }else if(dbType=="BLOB"){
+        return "string";
+    }else if(dbType=="CLOB"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "DateTime?";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && dataPrecision=="1"){
+        return "bool?";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "double?";
+    }else{
+    return dbType;
+    }
+}
+
+public static string GetClassName(string text)
+{
+    text = ToPascalCase(text);
+    if(text.IndexOf('s')==text.Length-1){
+        string result = text.Remove(text.LastIndexOf('s'));
+        return result;
+    }
+    return text;
+}
+
+public static string ToPascalCase(string text)
+{
+    string result = text.Split('_').Select(s => char.ToUpperInvariant(s[0]) + s.Substring(1, s.Length - 1).ToLower()).Aggregate(string.Empty, (s1, s2) => s1 + s2); ;
+    return result;
+}
+
+public static string GetObjectName(string text)
+{
+    text = ToPascalCase(text);
+    text = Char.ToLower(text[0]) + text.Substring(1, text.Length - 1);
+    if (text.LastIndexOf('s') == text.Length - 1)
+    {
+        text = text.Remove(text.LastIndexOf('s'));
+    }
+    return text;
+}
+#>

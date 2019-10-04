@@ -1,0 +1,120 @@
+﻿<#@ template language="C#"#>
+<#@ assembly name="System" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data" #>
+<#@ assembly name="System.Data.Common" #>
+<#@ assembly name="System.Collections" #> 
+<#@ assembly name="Oracle.ManagedDataAccess" #>
+<#@ assembly name="System.Runtime" #>
+<#@ assembly name="System.ComponentModel.Primitives" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Data" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Data.Common" #>
+<#@ import namespace="System.Runtime" #>
+<#@ import namespace="Oracle.ManagedDataAccess.Client" #>
+<#@ parameter name="tableName" type="System.string" #>
+<#@ parameter name="columnNameList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="columnTypeList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="nullableList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="dataPrecision" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="dataScale" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="ClassName" type="System.string" #>
+<#@ parameter name="ObjectName" type="System.string" #>
+<#@ parameter name="AngularFileName" type="System.string" #>
+create or replace PACKAGE <#=tableName#>_PKG AS 
+
+PROCEDURE GET_<#=tableName#>_PRC(P_ID NUMBER ,P_REFCURSOR_OUT  OUT SYS_REFCURSOR ) ;
+PROCEDURE ADD_<#=tableName#>_PRC(
+<#for(int i=0;i<columnTypeList.Count;i++){ 
+		if(columnNameList[i]!="DELETED_BY" 
+		&& columnNameList[i]!="DELETION_DATE"
+		&& columnNameList[i]!="MODIFIED_BY"
+		&& columnNameList[i]!="MODIFICATION_DATE" 
+		&& columnNameList[i]!="CREATION_DATE"
+		&& columnNameList[i]!="ID"){#>
+P_<#=columnNameList[i]#> <#=tableName#>.<#=columnNameList[i]#>%TYPE,
+<#}}#>P_ID_OUT OUT NUMBER);
+PROCEDURE DEL_<#=tableName#>_prc(P_ID NUMBER ,P_DELETED_BY <#=tableName#>.DELETED_BY%TYPE ) ;
+PROCEDURE UPD_<#=tableName#>_PRC(
+<#for(int i=0;i<columnTypeList.Count;i++){ 
+		if(columnNameList[i]!="DELETED_BY" 
+		&& columnNameList[i]!="DELETION_DATE" 
+		&& columnNameList[i]!="MODIFICATION_DATE"
+		&& columnNameList[i]!="CREATED_BY"
+		&& columnNameList[i]!="CREATION_DATE"){
+		if(i<columnTypeList.Count-6){#>
+P_<#=columnNameList[i]#> <#=tableName#>.<#=columnNameList[i]#>%TYPE,
+<#}else{#>
+P_<#=columnNameList[i]#> <#=tableName#>.<#=columnNameList[i]#>%TYPE
+<#}}}#>);
+PROCEDURE SEARCH_<#=tableName#>_PRC (P_CURRENT_PAGE IN INTEGER,P_PAGE_SIZE IN INTEGER,P_TOTAL_RECORDS OUT INTEGER,P_REFCURSOR_OUT OUT SYS_REFCURSOR);
+ 
+
+END <#=tableName#>_PKG;
+<#+
+public string GetTypeScriptType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "number";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="CHAR"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "Date";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)==1){
+        return "boolean";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "number";
+    }else{
+    return dbType;
+    }
+}
+public string GetType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "int";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="CHAR"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "DateTime";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)==1){
+        return "bool";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "double";
+    }else{
+    return dbType;
+    }
+}
+public string GetNullableType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "int?";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="CHAR"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "DateTime?";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && dataPrecision=="1"){
+        return "bool?";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "double?";
+    }else{
+    return dbType;
+    }
+}
+#>

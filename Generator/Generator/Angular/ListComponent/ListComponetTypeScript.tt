@@ -1,0 +1,157 @@
+﻿<#@ template language="C#"#>
+<#@ assembly name="System" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data" #>
+<#@ assembly name="System.Data.Common" #>
+<#@ assembly name="System.Collections" #>
+<#@ assembly name="Oracle.ManagedDataAccess" #>
+<#@ assembly name="System.Runtime" #>
+<#@ assembly name="System.ComponentModel.Primitives" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Data" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Data.Common" #>
+<#@ import namespace="System.Runtime" #>
+<#@ import namespace="Oracle.ManagedDataAccess.Client" #>
+<#@ parameter name="tableName" type="System.string" #>
+<#@ parameter name="columnNameList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="columnTypeList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="nullableList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="dataPrecision" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="dataScale" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="ClassName" type="System.string" #>
+<#@ parameter name="ObjectName" type="System.string" #>
+<#@ parameter name="AngularFileName" type="System.string" #>
+import { Component, OnInit } from '@angular/core';
+import { <#=ClassName#> } from 'app/classes/<#=AngularFileName#>';
+import { Router } from '@angular/router';
+import { <#=ClassName#>Service } from 'app/services/<#=AngularFileName#>.service';
+import { NotifyService } from 'app/services/notify.service';
+import { ConfirmationService } from 'primeng/api';
+import { TranslationService } from 'angular-l10n';
+
+@Component({
+  selector: 'app-<#=AngularFileName#>',
+  templateUrl: './<#=AngularFileName#>.component.html',
+  styleUrls: ['./<#=AngularFileName#>.component.css']
+})
+export class <#=ClassName#>sComponent implements OnInit {
+
+  totalRecord: number;
+  currentPage: number = 1;
+  lst<#=ClassName#>s: <#=ClassName#>[] = [];
+  searchText: string = "";
+
+  constructor(private translation: TranslationService,private confirmationService: ConfirmationService,public notifyService: NotifyService,private <#=ObjectName#>Service: <#=ClassName#>Service,private router: Router) { }
+
+  ngOnInit() {
+    this.search<#=ClassName#>List();
+  }
+
+  search<#=ClassName#>List() {
+      this.searchText = this.searchText ? this.searchText : "";
+      this.<#=ObjectName#>Service.search(this.searchText, this.currentPage, 10).subscribe((resp: any) => {
+      this.lst<#=ClassName#>s = resp ? resp.collection : [];
+      this.totalRecord = resp ? resp.numberOfRecords : 0;
+    });
+  }
+
+  add<#=ClassName#>() { 
+    this.router.navigate(['/add<#=ClassName#>']);
+  }
+
+  pageChanged(event) {
+    this.currentPage = event;
+    this.search<#=ClassName#>List();
+  }
+
+  confirmMessage(id: number) {
+    this.confirmationService.confirm({
+      message: this.translation.translate('areYouSuretoDelete?'),
+      accept: () => {
+        this.delete(id);
+      }
+    });
+  }
+
+  delete(id: number) {
+    this.<#=ObjectName#>Service.delete(id).subscribe((res: any) => {
+      this.search<#=ClassName#>List();
+      this.notifyService.showSuccessMessageBox("DeletedSuccessfully", "");
+    });
+  }  
+
+  reset() {
+      this.searchText = "";
+      this.search<#=ClassName#>List()
+  }
+}<#+
+public string GetTypeScriptType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "number";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="CHAR"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "Date";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)==1){
+        return "boolean";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "number";
+    }else{
+    return dbType;
+    }
+}
+public string GetType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "int";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="CHAR"){
+        return "string";
+    }else if(dbType=="BLOB"){
+        return "string";
+    }else if(dbType=="CLOB"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "DateTime";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)==1){
+        return "bool";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "double";
+    }else{
+    return dbType;
+    }
+}
+public string GetNullableType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "int?";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="CHAR"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "DateTime?";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && dataPrecision=="1"){
+        return "bool?";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "double?";
+    }else{
+    return dbType;
+    }
+}
+#>

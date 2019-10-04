@@ -1,0 +1,351 @@
+﻿<#@ template language="C#"#>
+<#@ assembly name="System" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data" #>
+<#@ assembly name="System.Data.Common" #>
+<#@ assembly name="System.Collections" #>
+<#@ assembly name="Oracle.ManagedDataAccess" #>
+<#@ assembly name="System.Runtime" #>
+<#@ assembly name="System.ComponentModel.Primitives" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Data" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Data.Common" #>
+<#@ import namespace="System.Runtime" #>
+<#@ import namespace="Oracle.ManagedDataAccess.Client" #>
+<#@ parameter name="tableName" type="System.string" #>
+<#@ parameter name="columnNameList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="columnTypeList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="nullableList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="dataPrecision" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="dataScale" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="ClassName" type="System.string" #>
+<#@ parameter name="ObjectName" type="System.string" #>
+<#@ parameter name="AngularFileName" type="System.string" #>
+using Oracle.ManagedDataAccess.Client;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using Core;
+using Entity;
+
+namespace DAL.DataAccess
+{
+    public class <#=ClassName#>DAL:DataAccessBase
+    {
+
+		#region Constants
+
+        #region Procedure Names
+
+        protected const string DEL_<#=tableName.ToUpper()#>_PROCEDURE_NAME = "<#=tableName#>_PKG.DEL_<#=tableName#>_prc";
+        protected const string GET_<#=tableName.ToUpper()#>_PROCEDURE_NAME = "<#=tableName#>_PKG.GET_<#=tableName#>_prc";
+        protected const string ADD_<#=tableName.ToUpper()#>_PROCEDURE_NAME = "<#=tableName#>_PKG.ADD_<#=tableName#>_prc";
+        protected const string UPD_<#=tableName.ToUpper()#>_PROCEDURE_NAME = "<#=tableName#>_PKG.UPD_<#=tableName#>_prc";
+        protected const string SEARCH_<#=tableName.ToUpper()#>_PROCEDURE_NAME = "<#=tableName#>_PKG.SEARCH_<#=tableName#>_prc";
+		#endregion
+
+        #region Parameter Names
+<#for(int i=0;i<columnTypeList.Count;i++){#>
+        protected const string P_<#=columnNameList[i].ToUpper()#> = "P_<#=columnNameList[i].ToUpper()#>";
+<#}#>
+		protected const string P_REFCURSOR_OUT = "P_REFCURSOR_OUT";
+		protected const string P_ID_OUT = "P_ID_OUT";
+
+		#region Pagination & Sorting
+        protected const string P_CURRENT_PAGE = "P_CURRENT_PAGE";
+        protected const string P_PAGE_SIZE = "P_PAGE_SIZE";
+		protected const string P_TOTAL_RECORDS = "P_TOTAL_RECORDS";
+		#endregion
+
+		#endregion 
+
+        #region Column Names
+
+<#for(int i=0;i<columnTypeList.Count;i++){#>
+        public const string <#=columnNameList[i].ToUpper()#>_COLUMN_NAME = "<#=columnNameList[i]#>";
+<#}#>
+		 #endregion 
+		 #endregion 
+
+		#region Methods
+        /// <summary>
+        /// Search paged <#=ClassName#>.
+        /// </summary>
+        /// <returns>return PagedSearchResult of <#=ClassName#>s.</returns>
+        /// <param name="currentPage">Current page.</param>
+        /// <param name="pageSize">Page size.</param>
+        /// <param name="totalRecord">Total record.</param>
+        public PagedSearchResult<<#=ClassName#>> Search(int currentPage, int pageSize)
+        {
+			List<<#=ClassName#>> <#=ObjectName#>List = new List<<#=ClassName#>>();
+			PagedSearchResult<<#=ClassName#>> result = new PagedSearchResult<<#=ClassName#>>();
+             OracleParameter[] Parameters =
+              {
+                new OracleParameter(P_CURRENT_PAGE,OracleDbType.Int32,currentPage,ParameterDirection.Input),
+                new OracleParameter(P_PAGE_SIZE,OracleDbType.Int32,pageSize,ParameterDirection.Input),
+                new OracleParameter(P_TOTAL_RECORDS,OracleDbType.Int32,0,ParameterDirection.Output),
+                new OracleParameter(P_REFCURSOR_OUT,OracleDbType.RefCursor,null,ParameterDirection.Output),
+            };
+			OracleCommand oracleCommand = Connection.CreateCommand();
+            oracleCommand.CommandType = CommandType.StoredProcedure;
+            //Open DataReader
+            using (OracleDataReader reader = DBHelper.ExecuteReader(Connection, oracleCommand, SEARCH_<#=tableName.ToUpper()#>_PROCEDURE_NAME, Parameters))
+            {
+                while (reader.Read())
+                {
+                    <#=ClassName#> <#=ObjectName#> = new <#=ClassName#>();
+                    GetEntityFromReader(reader, <#=ObjectName#>);
+                    <#=ObjectName#>List.Add(<#=ObjectName#>);
+                }
+            }
+
+            result.NumberOfRecords = Convert.ToInt32(DBHelper.GetParameterValue(oracleCommand,P_TOTAL_RECORDS));
+            result.Collection = <#=ObjectName#>List;
+            return result;
+        }
+
+        /// <summary>
+        /// Load <#=ClassName#> by Id.
+        /// </summary>
+        /// <returns><#=ClassName#> Object.</returns>
+        /// <param name="id">Identifier.</param>
+        public <#=ClassName#> Load(int id)
+        {
+			<#=ClassName#> <#=ObjectName#> = null;
+			OracleParameter[] Parameters =
+            {
+                new OracleParameter(P_ID,OracleDbType.Int32,id,ParameterDirection.Input),
+                new OracleParameter(P_REFCURSOR_OUT,OracleDbType.RefCursor,null,ParameterDirection.Output)
+            };
+			OracleCommand oracleCommand = new OracleCommand();
+            oracleCommand.CommandType = CommandType.StoredProcedure;
+            //Open DataReader
+            using (OracleDataReader reader = DBHelper.ExecuteReader(Connection, oracleCommand, GET_<#=tableName.ToUpper()#>_PROCEDURE_NAME, Parameters))
+            {
+                while (reader.Read())
+                {
+                    if (<#=ObjectName#> == null)
+                        <#=ObjectName#> = new <#=ClassName#>();
+                    GetEntityFromReader(reader, <#=ObjectName#>);
+                }
+            }
+            return <#=ObjectName#>;
+        }
+
+        /// <summary>
+        /// Insert <#=ClassName#> to database.
+        /// </summary>
+        /// <returns>The inserted <#=ClassName#> Id.</returns>
+        /// <param name="<#=ClassName#>"><#=ClassName#> object.</param>
+        public int Add(<#=ClassName#> <#=ObjectName#>)
+        {  
+			OracleParameter[] Parameters =
+				{
+	<#for(int i=0;i<columnTypeList.Count;i++){
+		if(columnNameList[i]!="ID" 
+			&& columnNameList[i]!="DELETED_BY" 
+			&& columnNameList[i]!="DELETION_DATE"
+			&& columnNameList[i]!="MODIFIED_BY"
+			&& columnNameList[i]!="MODIFICATION_DATE"
+			&& columnNameList[i]!="CREATION_DATE"){
+	#>
+					new OracleParameter(P_<#=columnNameList[i].ToUpper()#>,OracleDbType.<#=GetDBType(columnTypeList[i])#>,<#=ObjectName#>.<#=ToPascalCase(columnNameList[i])#>,ParameterDirection.Input),
+	<#  }
+	}
+	#>
+					new OracleParameter(P_ID_OUT,OracleDbType.Int32,null,ParameterDirection.Output)
+
+          };
+            OracleCommand oracleCommand = Connection.CreateCommand();
+            oracleCommand.CommandType = CommandType.StoredProcedure;
+            DBHelper.ExecuteNonQuery(Connection, oracleCommand, ADD_<#=tableName.ToUpper()#>_PROCEDURE_NAME, Parameters);
+
+            <#=ObjectName#>.Id = Convert.ToInt32(DBHelper.GetParameterValue(oracleCommand, P_ID_OUT));
+
+            return <#=ObjectName#>.Id;
+        }
+
+        /// <summary>
+        /// Update <#=ClassName#> into database.
+        /// </summary>
+        /// <param name="<#=ClassName#>"><#=ClassName#> object.</param>
+        public void Update(<#=ClassName#> <#=ObjectName#>)
+        { 
+			OracleParameter[] Parameters =
+            {
+				new OracleParameter(P_ID,OracleDbType.Int32,<#=ObjectName#>.Id,ParameterDirection.Input),
+           <#for(int i=0;i<columnTypeList.Count;i++){
+    if(columnNameList[i]!="ID" 
+        && columnNameList[i]!="DELETED_BY" 
+        && columnNameList[i]!="DELETION_DATE" 
+        && columnNameList[i]!="MODIFICATION_DATE"
+        && columnNameList[i]!="CREATION_DATE"
+		&& columnNameList[i]!="CREATED_BY"){#>
+                new OracleParameter(P_<#=columnNameList[i].ToUpper()#>,OracleDbType.<#=GetDBType(columnTypeList[i])#>,<#=ObjectName#>.<#=ToPascalCase(columnNameList[i])#>,ParameterDirection.Input),
+	 <#}}#>};
+            OracleCommand oracleCommand = Connection.CreateCommand();
+            oracleCommand.CommandType = CommandType.StoredProcedure;
+            DBHelper.ExecuteNonQuery(Connection, oracleCommand, UPD_<#=tableName.ToUpper()#>_PROCEDURE_NAME, Parameters);
+        }
+
+        /// <summary>
+        /// Delete <#=ClassName#> by id from database(Soft Delete).
+        /// </summary>
+        /// <param name="id">Identifier.</param>
+        public void Delete(int id,string deletedBy)
+        {
+             OracleParameter[] Parameters =
+            {
+                new OracleParameter(P_ID,OracleDbType.Int32,id,ParameterDirection.Input),
+                new OracleParameter(P_DELETED_BY,OracleDbType.Varchar2,deletedBy,ParameterDirection.Input)
+            };
+            OracleCommand oracleCommand = Connection.CreateCommand();
+            oracleCommand.CommandType = CommandType.StoredProcedure;
+            DBHelper.ExecuteNonQuery(Connection, oracleCommand, DEL_<#=tableName.ToUpper()#>_PROCEDURE_NAME, Parameters);
+        }
+
+        /// <summary>
+        /// Fill <#=ClassName#> from reader
+        /// </summary>
+        /// <param name="ds">reader object.</param>
+		/// <param name="ds"><#=ClassName#> object to be filled.</param>
+        public void GetEntityFromReader(OracleDataReader reader, <#=ClassName#> entity)
+        { 
+			int columnIndx = 0;
+<#for(int i=0;i<columnTypeList.Count;i++){#>
+            if (ColumnExists(reader, <#=columnNameList[i].ToUpper()#>_COLUMN_NAME))
+            {
+                columnIndx = reader.GetOrdinal(<#=columnNameList[i].ToUpper()#>_COLUMN_NAME);
+                if (!reader.IsDBNull(columnIndx))
+                    entity.<#=ToPascalCase(columnNameList[i])#> = Convert.<#=GetTypeCastType(columnTypeList[i],dataPrecision[i],dataScale[i]) #>(reader[columnIndx]);
+            }
+<#}#>
+        }
+		#endregion
+    }
+}<#+
+public string GetDBType(string dbType)
+{
+    if(dbType=="NUMBER")
+    {
+        return "Int32";
+    } else if(dbType=="VARCHAR2"){
+        return "Varchar2";
+    }else if(dbType=="CHAR"){
+        return "Char";
+    }else if(dbType=="BLOB"){
+        return "Blob";
+    }else if(dbType=="CLOB"){
+        return "Clob";
+    }else if(dbType=="DATE"){
+        return "Date";
+    }  else{
+    return dbType;
+    }
+}
+
+ public string GetType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "int";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="CHAR"){
+        return "string";
+    }else if(dbType=="BLOB"){
+        return "string";
+    }else if(dbType=="CLOB"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "DateTime";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)==1){
+        return "bool";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "double";
+    }else{
+    return dbType;
+    }
+}
+
+public string GetTypeCastType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "ToInt32";
+    }else if(dbType=="VARCHAR2"){
+        return "ToString";
+    }else if(dbType=="VARCHAR"){
+        return "ToString";
+    }else if(dbType=="CHAR"){
+        return "ToString";
+    }else if(dbType=="BLOB"){
+        return "ToString";
+    }else if(dbType=="CLOB"){
+        return "ToString";
+    }else if(dbType=="DATE"){
+        return "ToDateTime";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)==1){
+        return "ToBoolean";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "ToDouble";
+    }else{
+    return dbType;
+    }
+}
+
+public string GetNullableType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "int?";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="BLOB"){
+        return "string";
+    }else if(dbType=="CLOB"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "DateTime?";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && dataPrecision=="1"){
+        return "bool?";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "double?";
+    }else{
+    return dbType;
+    }
+}
+
+public static string GetClassName(string text)
+{
+    text = ToPascalCase(text);
+    if(text.IndexOf('s')==text.Length-1){
+        string result = text.Remove(text.LastIndexOf('s'));
+        return result;
+    }
+    return text;
+}
+
+public static string ToPascalCase(string text)
+{
+    string result = text.Split('_').Select(s => char.ToUpperInvariant(s[0]) + s.Substring(1, s.Length - 1).ToLower()).Aggregate(string.Empty, (s1, s2) => s1 + s2); ;
+    return result;
+}
+
+public static string GetObjectName(string text)
+{
+    text = ToPascalCase(text);
+    text = Char.ToLower(text[0]) + text.Substring(1, text.Length - 1);
+    if (text.LastIndexOf('s') == text.Length - 1)
+    {
+        text = text.Remove(text.LastIndexOf('s'));
+    }
+    return text;
+}
+#>

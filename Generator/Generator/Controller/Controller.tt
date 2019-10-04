@@ -1,0 +1,156 @@
+﻿<#@ template language="C#"#>
+<#@ assembly name="System" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data" #>
+<#@ assembly name="System.Data.Common" #>
+<#@ assembly name="System.Collections" #>
+<#@ assembly name="Oracle.ManagedDataAccess" #>
+<#@ assembly name="System.Runtime" #>
+<#@ assembly name="System.ComponentModel.Primitives" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Data" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Data.Common" #>
+<#@ import namespace="System.Runtime" #>
+<#@ import namespace="Oracle.ManagedDataAccess.Client" #>
+<#@ parameter name="tableName" type="System.string" #>
+<#@ parameter name="columnNameList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="columnTypeList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="nullableList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="dataPrecision" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="dataScale" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="ClassName" type="System.string" #>
+<#@ parameter name="ObjectName" type="System.string" #>
+<#@ parameter name="AngularFileName" type="System.string" #>
+using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
+using System.Web.Http;
+using System.Web.Http.Cors;
+using Workflow.Core;
+using Workflow.Common.Core.Security;
+using Workflow.Services;
+using Workflow.Services.core.Security;
+using Workflow.Common.Core;
+using System.Web.Script.Serialization;
+using Workflow.Common;
+using Workflow.Entity;
+
+namespace API
+{
+	[EnableCors(origins: "*", headers: "*", methods: "*")]
+    [RoutePrefix("api/<#=ObjectName#>s")]
+    [UsesDisposableService]
+    [Authorize]
+    public class <#=ClassName#>Controller : ApiControllerBase
+    {
+         
+		<#=ClassName#>Service <#=ObjectName#>Service = new <#=ClassName#>Service();
+
+        protected override void RegisterServices(List<IServiceContract> disposableServices)
+        {
+            disposableServices.Add(<#=ObjectName#>Service);
+        }
+
+		[HttpGet]
+        [Route("search")]
+        public HttpResponseMessage Search<#=ClassName#>(HttpRequestMessage request,[FromUri] string searchText, [FromUri] int currentPage, [FromUri] int pageSize)
+        {
+            return GetHttpResponse(request, () =>
+            {
+                return request.CreateResponse(HttpStatusCode.OK, <#=ObjectName#>Service.Search(currentPage, pageSize));
+
+            });
+        }
+
+        [HttpPost]
+        [Route("")]
+        public HttpResponseMessage Add<#=ClassName#>(HttpRequestMessage request, [FromBody] <#=ClassName#> <#=ObjectName#>)
+        {
+            return GetHttpResponse(request, () =>
+            {
+                return request.CreateResponse(HttpStatusCode.OK, <#=ObjectName#>Service.Add(<#=ObjectName#>));
+            });
+        }
+
+        [HttpGet]
+        [Route("{id}")]
+        public HttpResponseMessage Load<#=ClassName#>ById(HttpRequestMessage request, [FromUri] int id)
+        {
+            return GetHttpResponse(request, () =>
+            {
+                return request.CreateResponse(HttpStatusCode.OK, <#=ObjectName#>Service.Load(id));
+            });
+        }
+
+        [HttpPut]
+        [Route("{id}")]
+        public HttpResponseMessage Update<#=ClassName#>(HttpRequestMessage request, [FromBody] <#=ClassName#> <#=ObjectName#>)
+        {
+            return GetHttpResponse(request, () =>
+            { 
+                return request.CreateResponse(HttpStatusCode.OK, <#=ObjectName#>Service.Update(<#=ObjectName#>));
+            });
+        }
+
+		[HttpDelete]
+        [Route("{id}")]
+        public HttpResponseMessage Delete<#=ClassName#>(HttpRequestMessage request, [FromUri]int id)
+        {
+            return GetHttpResponse(request, () =>
+            {
+                return request.CreateResponse(HttpStatusCode.OK, <#=ObjectName#>Service.Delete(id));
+
+            });
+        }
+         
+    }
+}<#+
+ public string GetType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "int";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="CHAR"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "DateTime";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)==1){
+        return "bool";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "double";
+    }else{
+    return dbType;
+    }
+}
+public string GetNullableType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "int?";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="CHAR"){
+        return "string";
+    }else if(dbType=="BLOB"){
+        return "string";
+    }else if(dbType=="CLOB"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "DateTime?";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && dataPrecision=="1"){
+        return "bool?";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "double?";
+    }else{
+    return dbType;
+    }
+}
+#>

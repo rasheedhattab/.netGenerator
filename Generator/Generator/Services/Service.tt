@@ -1,0 +1,206 @@
+﻿<#@ template language="C#"#>
+<#@ assembly name="System" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Data" #>
+<#@ assembly name="System.Data.Common" #>
+<#@ assembly name="System.Collections" #>
+<#@ assembly name="Oracle.ManagedDataAccess" #>
+<#@ assembly name="System.Runtime" #>
+<#@ assembly name="System.ComponentModel.Primitives" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ import namespace="System.Data" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Data.Common" #>
+<#@ import namespace="System.Runtime" #>
+<#@ import namespace="Oracle.ManagedDataAccess.Client" #>
+<#@ parameter name="tableName" type="System.string" #>
+<#@ parameter name="columnNameList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="columnTypeList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="nullableList" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="dataPrecision" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="dataScale" type="System.Collections.Generic.List<string>" #>
+<#@ parameter name="ClassName" type="System.string" #>
+<#@ parameter name="ObjectName" type="System.string" #>
+<#@ parameter name="AngularFileName" type="System.string" #>
+using System;
+using DAL;
+using DAL.DataAccess;
+using Entity;
+using System.Collections.Generic;
+using Services.Validators;
+using FluentValidation.Results;
+using Entity;
+using Core;
+using Common;
+using Common.Core.Exception;
+using Services.Resource;
+
+namespace Services
+{
+    public class <#=ClassName#>Service:ServiceBase
+    {
+        List<ErrorData> _ErrorDataList;
+        public List<ErrorData> ErrorDataList
+        {
+            get
+            {
+                if (_ErrorDataList == null)
+                {
+                    _ErrorDataList = new List<ErrorData>();
+                }
+                return _ErrorDataList;
+            }
+        }
+
+        /// <summary>
+        /// Add <#=ClassName#> object.
+        /// </summary>
+        /// <returns>added Id.</returns>
+        /// <param name="<#=ClassName#>"><#=ClassName#> object.</param>
+        public int Add(<#=ClassName#> <#=ObjectName#>)
+        {
+            using (UnitOfWork unitOfWork = new UnitOfWork(true))
+            {
+                ActiveUser currentUser = Common.IdentityManager.GetCurrentUser();
+                <#=ClassName#>DAL <#=ObjectName#>DAL = (<#=ClassName#>DAL)unitOfWork.Repository<<#=ClassName#>DAL>();
+                <#=ObjectName#>.CreatedBy = currentUser.Id.ToString();
+
+                <#=ClassName#>Validator <#=ObjectName#>Validator = new <#=ClassName#>Validator();
+                ValidationResult validationResult = <#=ObjectName#>Validator.Validate(<#=ObjectName#>);
+                if (!validationResult.IsValid)
+                {
+                    ErrorDataList.AddRange(ErrorCodeManager.GetErrors(validationResult));
+                    throw new BussinessException(ErrorDataList);
+                }
+                <#=ObjectName#>.Id = <#=ObjectName#>DAL.Add(<#=ObjectName#>);
+                unitOfWork.SaveChanges();
+				return <#=ObjectName#>.Id;
+            }
+        }
+
+        /// <summary>
+        /// Update <#=ClassName#> object.
+        /// </summary>
+		/// <returns>updated Id.</returns>
+        /// <param name="<#=ClassName#>"><#=ClassName#> object.</param>
+        public int Update(<#=ClassName#> <#=ObjectName#>)
+        {
+            using (UnitOfWork unitOfWork = new UnitOfWork(true))
+            {
+                <#=ClassName#>DAL <#=ObjectName#>DAL = (<#=ClassName#>DAL)unitOfWork.Repository<<#=ClassName#>DAL>();
+
+                <#=ClassName#>Validator <#=ObjectName#>Validator = new <#=ClassName#>Validator();
+
+                ValidationResult result = <#=ObjectName#>Validator.Validate(<#=ObjectName#>);
+                if (!result.IsValid)
+                {
+                    ErrorDataList.AddRange(ErrorCodeManager.GetErrors(result));
+                    throw new BussinessException(ErrorDataList);
+                }
+                <#=ObjectName#>DAL.Update(<#=ObjectName#>);
+
+                unitOfWork.SaveChanges();
+				return <#=ObjectName#>.Id;
+            }
+        }
+
+        /// <summary>
+        /// Delete <#=ClassName#> by id
+        /// </summary>
+		/// <returns>return true if deleted</returns>
+        /// <param name="id">Identifier.</param>
+        public bool Delete(int id)
+        {
+            using (var unitOfWork = new UnitOfWork())
+            {
+                <#=ClassName#>DAL <#=ObjectName#>DAL = (<#=ClassName#>DAL)unitOfWork.Repository<<#=ClassName#>DAL>();
+                ActiveUser user = IdentityManager.GetCurrentUser();
+                <#=ObjectName#>DAL.Delete(id, user.Id.ToString());
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Search <#=ClassName#>.
+        /// </summary>
+        /// <returns>PagedSearchResult of <#=ClassName#>s</returns>
+        /// <param name="currentPage">Current page.</param>
+        /// <param name="pageSize">Page size.</param> 
+        public PagedSearchResult<<#=ClassName#>> Search(int currentPage, int pageSize)
+        {
+            using (var unitOfWork = new UnitOfWork())
+            {
+                <#=ClassName#>DAL <#=ObjectName#>DAL = (<#=ClassName#>DAL)unitOfWork.Repository<<#=ClassName#>DAL>();
+                PagedSearchResult<<#=ClassName#>> result = <#=ObjectName#>DAL.Search(currentPage, pageSize);
+                return result;
+            }
+        }
+
+        /// <summary>
+        /// Load <#=ClassName#> by Id
+        /// </summary>
+        /// <returns><#=ClassName#> Object.</returns>
+        /// <param name="id">Identifier.</param>
+        public <#=ClassName#> Load(int id)
+        {
+            using (UnitOfWork unitOfWork = new DAL.UnitOfWork())
+            {
+                <#=ClassName#>DAL <#=ObjectName#>DAL = (<#=ClassName#>DAL)unitOfWork.Repository<<#=ClassName#>DAL>();
+                <#=ClassName#> <#=ObjectName#> = <#=ObjectName#>DAL.Load(id);
+                return <#=ObjectName#>;
+            }
+        }
+    }
+}<#+
+ public string GetType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "int";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="CHAR"){
+        return "string";
+    }else if(dbType=="BLOB"){
+        return "string";
+    }else if(dbType=="CLOB"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "DateTime";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)==1){
+        return "bool";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "double";
+    }else{
+    return dbType;
+    }
+}
+public string GetNullableType(string dbType,string dataPrecision,string dataScale)
+{
+    if(dbType=="NUMBER" && string.IsNullOrEmpty(dataPrecision)){
+        return "int?";
+    }else if(dbType=="VARCHAR2"){
+        return "string";
+    }else if(dbType=="VARCHAR"){
+        return "string";
+    }else if(dbType=="CHAR"){
+        return "string";
+    }else if(dbType=="BLOB"){
+        return "string";
+    }else if(dbType=="CLOB"){
+        return "string";
+    }else if(dbType=="DATE"){
+        return "DateTime?";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && dataPrecision=="1"){
+        return "bool?";
+    }else if(dbType=="NUMBER" && !string.IsNullOrEmpty(dataPrecision)  && int.Parse(dataPrecision)>1 
+			&& !string.IsNullOrEmpty(dataScale) && int.Parse(dataPrecision)>0 ){
+        return "double?";
+    }else{
+    return dbType;
+    }
+}
+#>
