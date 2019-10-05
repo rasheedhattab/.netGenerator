@@ -9,7 +9,7 @@ Generate the oracle package required for CRUD operations.
 I used the t4 to generate files and copy the generated file to the right path.
 
 for more details how to use it visit my blog
-http://console-dot-write.blogspot.com/2019/10/t4.html
+http://consoledotwrite.blogspot.com/2019/10/t4.html
 
 
 To start using this project: 
