@@ -1,8 +1,0 @@
-C:\Workspaces\Generator\Generator\bin\Debug\Generator.exe.config
-C:\Workspaces\Generator\Generator\bin\Debug\Generator.exe
-C:\Workspaces\Generator\Generator\bin\Debug\Generator.pdb
-C:\Workspaces\Generator\Generator\bin\Debug\Oracle.ManagedDataAccess.dll
-C:\Workspaces\Generator\Generator\obj\Debug\Generator.csproj.CoreCompileInputs.cache
-C:\Workspaces\Generator\Generator\obj\Debug\Generator.csproj.CopyComplete
-C:\Workspaces\Generator\Generator\obj\Debug\Generator.exe
-C:\Workspaces\Generator\Generator\obj\Debug\Generator.pdb
