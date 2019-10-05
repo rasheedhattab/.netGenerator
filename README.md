@@ -21,6 +21,7 @@ The output from this project is:
 
 
 To start using this project: 
+
 1.Add this project to your solution
 2.Go to app.config and put the oracle connection string.
 3.From app.config appSettings section change the path of generated files accourding to your projects paths.
