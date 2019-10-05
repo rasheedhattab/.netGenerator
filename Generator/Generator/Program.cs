@@ -9,7 +9,7 @@ using System.Linq;
 namespace T4TemplateGenerator
 { 
     class Program
-    {
+    { 
         static void Main(string[] args)
         {
             string tableName = "APP_REQUEST";
