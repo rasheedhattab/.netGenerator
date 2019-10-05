@@ -92,31 +92,31 @@ namespace T4TemplateGenerator
             GenerateAngualrService(tableName, angularServicePath, templateParams);
 
             //angular List Component TypeScript
-            //GenerateListComponent(tableName, angularComponentPath, templateParams);
+            GenerateListComponent(tableName, angularComponentPath, templateParams);
 
             //angular List Component CSS
-            //GenerateListCSS(tableName, angularComponentPath, templateParams);
+            GenerateListCSS(tableName, angularComponentPath, templateParams);
 
             //angular List Component HTML
-            //GenerateListHTML(tableName, angularComponentPath, templateParams);
+            GenerateListHTML(tableName, angularComponentPath, templateParams);
 
-            ////angular Add Component TypeScript
-            //GenerateAddComponent(tableName, angularComponentPath, templateParams);
+            //angular Add Component TypeScript
+            GenerateAddComponent(tableName, angularComponentPath, templateParams);
 
-            ////angular Add Component CSS
-           // GenerateAddCSS(tableName, angularComponentPath, templateParams);
+            //angular Add Component CSS
+            GenerateAddCSS(tableName, angularComponentPath, templateParams);
 
-            ////angular Add Component HTML
-            //GenerateAddHTML(tableName, angularComponentPath, templateParams);
+            //angular Add Component HTML
+            GenerateAddHTML(tableName, angularComponentPath, templateParams);
 
-            ////angular Edit Component TypeScript
-            //GenerateEditComponent(tableName, angularComponentPath, templateParams);
+            //angular Edit Component TypeScript
+            GenerateEditComponent(tableName, angularComponentPath, templateParams);
 
             ////angular Edit Component CSS
-           // GenerateEditCSS(tableName, angularComponentPath, templateParams);
+            GenerateEditCSS(tableName, angularComponentPath, templateParams);
 
-            ////angular Edit Component HTML
-           // GenerateEditHTML(tableName, angularComponentPath, templateParams);
+            //angular Edit Component HTML
+            GenerateEditHTML(tableName, angularComponentPath, templateParams);
 
             #endregion
 
