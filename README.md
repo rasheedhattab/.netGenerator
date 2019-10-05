@@ -8,16 +8,8 @@ also generates angular client-side screens (Add, update and List screens).
 Generate the oracle package required for CRUD operations.
 I used the t4 to generate files and copy the generated file to the right path.
 
-The output from this project is:
-1. Generated oracle package for CRUD operation
-2. Entity that represent the Table.
-3. Data access class that calls the database stored procedures.
-4. Service Layer that calls the Data access Layer.
-5. Validator class using FluentValidation that validates the required fields and Max length.
-6. API controller that calls the service layer.
-7. Angular Components (Add, Update and List)
-8. Angular service and view
-
+for more details how to use it visit my blog
+http://rasheedhattab.blogspot.com/2019/10/t4.html
 
 
 To start using this project: 
